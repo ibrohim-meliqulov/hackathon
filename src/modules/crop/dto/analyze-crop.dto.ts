@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional, IsIn } from 'class-validator';
 
 export class AnalyzeCropDto {
     @IsNotEmpty()
@@ -8,4 +8,9 @@ export class AnalyzeCropDto {
     @IsNotEmpty()
     @IsString()
     plantType: string = 'poliz';
+
+    @IsOptional()
+    @IsString()
+    @IsIn(['uz', 'ru'])
+    lang?: string = 'uz';
 }

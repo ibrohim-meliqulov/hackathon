@@ -29,7 +29,7 @@ export class UsersService {
         return {
             success: true,
             message: "You registered",
-            toke: accessToken
+            accessToken: accessToken
         }
     }
 

@@ -1,61 +1,87 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import axios from 'axios';
+import { Injectable, OnModuleInit, InternalServerErrorException } from '@nestjs/common';
+import OpenAI from 'openai';
 import { AnalyzeCropDto } from './dto/analyze-crop.dto';
 
 @Injectable()
-export class CropService {
-    // Rasmdagi aniq URL (oxirida slash bo'lishi shart emas)
-    private readonly apiUrl = 'https://crop.kindwise.com/api/v1/identification';
+export class CropService implements OnModuleInit {
+    private openai: OpenAI;
 
-    // Sizning yangi kalitingiz
-    private readonly apiKey = '9JSrwYXi3yumCZ1njsWkEPFO6eLE1VMdlwJR9subAliXtENieM';
+    onModuleInit() {
+        const apiKey = process.env.OPENAI_API_KEY;
+
+        if (!apiKey) {
+            console.error("❌ XATO: .env faylida OPENAI_API_KEY topilmadi!");
+            return;
+        }
+
+        this.openai = new OpenAI({
+            apiKey: apiKey,
+        });
+
+        console.log("✅ OpenAI muvaffaqiyatli ulandi.");
+    }
 
     async analyzePlant(dto: AnalyzeCropDto) {
         try {
+            if (!this.openai) {
+                throw new InternalServerErrorException("AI xizmati vaqtincha mavjud emas.");
+            }
+
             const base64Data = dto.imageBase64.includes(',')
                 ? dto.imageBase64.split(',')[1]
                 : dto.imageBase64;
 
-            const payload = {
-                images: [base64Data],
-                // Crop.health uchun qo'shimcha parametrlar shart emas
-            };
+            const language = dto.lang || 'uz';
 
-            const response = await axios.post(this.apiUrl, payload, {
-                headers: {
-                    'Api-Key': this.apiKey,
-                    'Content-Type': 'application/json'
-                }
+            const prompt = language === 'ru'
+                ? `Вы профессиональный агроном-фитопатолог. 
+                   Внимательно изучите форму листьев и пятна на фото. 
+                   Определите вид растения и болезнь. 
+                   Дайте краткий ответ в следующем формате:
+                   🌿 **Растение:** [Название]
+                   🦠 **Диагноз:** [Название болезни]
+                   📊 **Уверенность:** [0-100%]
+                   💡 **Причина:** [Краткое описание]
+                   💊 **Рекомендация:** [Конкретные фунгициды, доступные в СНГ]
+                   Ответ дайте строго на РУССКОМ языке.`
+                : `Siz professional agronom-fitopatologsiz. 
+                   Rasmga diqqat bilan qarab, barg shakli va dog'lardan o'simlik turini hamda kasalligini aniqlang. 
+                   Qisqa va aniq javob bering:
+                   🌿 **O'simlik:** [Nomi]
+                   🦠 **Kasallik:** [Nomi]
+                   📊 **Ishonch darajasi:** [0-100%]
+                   💡 **Sababi:** [Qisqa izoh]
+                   💊 **Tavsiya:** [O'zbekistonda mavjud dori nomlari (fungitsidlar)]
+                   Javob faqat O'ZBEK tilida bo'lsin.`;
+
+            const response = await this.openai.chat.completions.create({
+                model: "gpt-4o-mini",
+                messages: [
+                    {
+                        role: "user",
+                        content: [
+                            { type: "text", text: prompt },
+                            {
+                                type: "image_url",
+                                image_url: {
+                                    url: `data:image/jpeg;base64,${base64Data}`,
+                                    detail: "high"
+                                },
+                            },
+                        ],
+                    },
+                ],
+                max_tokens: 600,
             });
 
-            const result = response.data.result;
+            return response.choices[0].message.content;
 
-            // Sog'lomlikni tekshirish
-            if (result.is_healthy?.binary) {
-                return "🌿 Ekin sog'lom ko'rinadi. Hech qanday jiddiy kasallik aniqlanmadi.";
-            }
+        } catch (error: any) {
+            console.error("OpenAI API xatosi:", error.message);
 
-            // Kasallikni aniqlash
-            const disease = result.disease_assessment?.suggestions?.[0];
-
-            if (!disease) {
-                return "🧐 Rasmda ekin aniqlandi, lekin kasallikni aniqlash imkoni bo'lmadi. Rasmni yaqinroqdan oling.";
-            }
-
-            return `
-🟢 **Tahlil natijasi:**
-🦠 **Kasallik:** ${disease.name}
-📊 **Aniqroqlik:** ${(disease.probability * 100).toFixed(1)}%
-
-💡 **Tavsiya:** Agronom bilan maslahatlashib, tegishli choralar ko'ring.
-            `.trim();
-
-        } catch (error) {
-            // Agar API kalit xatosi bersa, terminalda ko'ramiz
-            const detailedError = error.response?.data || error.message;
-            console.error("DEBUG INFO:", detailedError);
-
-            throw new InternalServerErrorException("Tahlil qilishda xatolik. API kalit aktivlashishini kuting.");
+            return dto.lang === 'ru'
+                ? "⚠️ Ошибка при анализе. Пожалуйста, попробуйте позже."
+                : "⚠️ Tahlil qilishda xatolik yuz berdi. Iltimos, keyinroq urinib ko'ring.";
         }
     }
 }
