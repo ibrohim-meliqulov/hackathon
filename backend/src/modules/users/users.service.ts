@@ -19,7 +19,6 @@ export class UsersService {
             data: {
                 ...payload,
                 password: hashPass,
-                birth_date: new Date(payload.birth_date),
                 role: UserRole.USER
             }
         })
@@ -29,7 +28,7 @@ export class UsersService {
         return {
             success: true,
             message: "You registered",
-            toke: accessToken
+            accessToken: accessToken
         }
     }
 
