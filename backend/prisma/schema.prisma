@@ -25,12 +25,16 @@ model User {
 }
 
 model Planting {
-  id          Int       @id @default(autoincrement())
-  name        String
-  type        String
-  plantedDate DateTime
-  area        Float
-  harvestDate DateTime?
+  id              Int       @id @default(autoincrement())
+  name            String
+  type            String
+  plantedDate     DateTime
+  area            Float
+  harvestDate     DateTime?
+  advice          String?
+  expectedYield   String?
+  seedAmount      String?
+  estimatedProfit String?
 
   userId Int
   user   User @relation(fields: [userId], references: [id])
