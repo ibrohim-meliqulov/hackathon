@@ -5,7 +5,7 @@ import { RegisterDto } from './dto/register.dto';
 
 
 
-@Controller('users')
+@Controller('user')
 export class UsersController {
     constructor(private readonly userService: UsersService) { }
 
