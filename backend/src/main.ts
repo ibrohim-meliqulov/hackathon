@@ -14,7 +14,7 @@ async function bootstrap() {
   }))
 
   app.enableCors({
-    origin: ["http://localhost:5176", "https://ais-dev-yfyhnyeidmox5rj3ijh6uh-443022657534.asia-southeast1.run.app/", "https://hackathon-front-7t48.onrender.com/"],
+    origin: ["http://localhost:5176", "https://ais-dev-yfyhnyeidmox5rj3ijh6uh-443022657534.asia-southeast1.run.app", "https://hackathon-front-7t48.onrender.com"],
     credentials: true,
   });
 
