@@ -18,11 +18,16 @@ export class PlantingController {
         return this.plantingService.create(dto, req.user.id);
     }
 
+    @UseGuards(AuthGuard, RoleGuard)
+    @Roles(UserRole.USER, UserRole.SUPERADMIN)
     @Get()
     findAll(@Request() req) {
         return this.plantingService.findAll(req.user.id);
     }
 
+
+    @UseGuards(AuthGuard, RoleGuard)
+    @Roles(UserRole.USER, UserRole.SUPERADMIN)
     @Get(':id')
     findOne(@Param('id') id: string, @Request() req) {
         return this.plantingService.findOne(+id, req.user.id);

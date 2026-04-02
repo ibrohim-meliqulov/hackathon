@@ -7,13 +7,13 @@ import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class UsersService {
-    constructor(private prisma: PrismaService,
+    constructor(
+        private prisma: PrismaService,
         private jwtService: JwtService
     ) { }
 
     async createUser(payload: RegisterDto) {
-
-        const hashPass = await hashPassword(payload.password)
+        const hashPass = await hashPassword(payload.password);
 
         const user = await this.prisma.user.create({
             data: {
@@ -21,16 +21,14 @@ export class UsersService {
                 password: hashPass,
                 role: UserRole.USER
             }
-        })
+        });
 
-        const accessToken = await this.jwtService.sign({ id: user.id, phone: user.phone, role: user.role })
+        const accessToken = this.jwtService.sign({ id: user.id, phone: user.phone, role: user.role });
 
         return {
             success: true,
             message: "You registered",
-            accessToken: accessToken
-        }
+            accessToken
+        };
     }
-
-
 }

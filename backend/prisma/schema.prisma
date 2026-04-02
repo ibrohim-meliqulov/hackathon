@@ -12,14 +12,16 @@ enum UserRole {
 }
 
 model User {
-  id        Int        @id @default(autoincrement())
-  phone     String     @unique
-  password  String
-  name      String
-  surname   String
-  region    String
-  role      UserRole
-  plantings Planting[]
+  id         Int        @id @default(autoincrement())
+  phone      String?    @unique
+  password   String     @default("")
+  name       String
+  surname    String     @default("")
+  region     String     @default("")
+  role       UserRole   @default(USER)
+  telegramId Int?       @unique
+  username   String?
+  plantings  Planting[]
 }
 
 model Planting {
