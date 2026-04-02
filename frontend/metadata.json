@@ -1,0 +1,5 @@
+{
+  "name": "AgroScan",
+  "description": "Fermerlar va tomorqa egalari uchun AI diagnostika va nazorat tizimi",
+  "requestFramePermissions": ["camera", "microphone", "geolocation"]
+}
